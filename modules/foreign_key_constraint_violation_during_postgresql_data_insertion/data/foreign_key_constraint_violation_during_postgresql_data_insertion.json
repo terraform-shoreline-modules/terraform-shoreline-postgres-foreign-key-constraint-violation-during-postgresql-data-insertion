@@ -1,0 +1,154 @@
+{
+  "name": "foreign_key_constraint_violation_during_postgresql_data_insertion",
+  "description": "This incident type involves the violation of a foreign key constraint during data insertion into a PostgreSQL database. A foreign key constraint is a mechanism used to ensure data integrity by requiring that a value in one table matches a value in another table. When this constraint is violated during data insertion, it can cause errors and potentially corrupt the database. This type of incident is typically caused by issues with data mapping or inconsistencies in the database schema.",
+  "params": [
+    {
+      "name": "DATA_TYPE",
+      "value": ""
+    },
+    {
+      "name": "PORT_NUMBER",
+      "value": ""
+    },
+    {
+      "name": "PRIMARY_KEY_COLUMN",
+      "value": ""
+    },
+    {
+      "name": "FOREIGN_KEY_COLUMN",
+      "value": ""
+    },
+    {
+      "name": "FOREIGN_KEY_TABLE_NAME",
+      "value": ""
+    },
+    {
+      "name": "DATABASE_NAME",
+      "value": ""
+    },
+    {
+      "name": "TABLE_NAME",
+      "value": ""
+    },
+    {
+      "name": "DATA_FORMAT",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Foreign Key Constraint Violation During PostgreSQL Data Insertion\nThis incident type involves the violation of a foreign key constraint during data insertion into a PostgreSQL database. A foreign key constraint is a mechanism used to ensure data integrity by requiring that a value in one table matches a value in another table. When this constraint is violated during data insertion, it can cause errors and potentially corrupt the database. This type of incident is typically caused by issues with data mapping or inconsistencies in the database schema."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if the PostgreSQL service is running"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `systemctl status postgresql.service`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Connect to the database and list all tables to check if foreign key constraints exist"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo -u postgres psql -d ${DATABASE_NAME} -c \"\\d\"`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the table schema to verify that foreign key constraints exist"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo -u postgres psql -d ${DATABASE_NAME} -c \"\\d ${TABLE_NAME}\"`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the data being inserted to verify that foreign key constraints are being satisfied"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo -u postgres psql -d ${DATABASE_NAME} -c \"SELECT * FROM ${TABLE_NAME}\"`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if any other processes are accessing the database and causing conflicts"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo lsof -i tcp:${PORT_NUMBER}`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if there are any pending transactions that could be causing conflicts"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo -u postgres psql -d ${DATABASE_NAME} -c \"SELECT * FROM pg_stat_activity WHERE datname = '${DATABASE_NAME}' AND state = 'idle in transaction'\"`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Incorrect data type or format: If the foreign key column data type is not the same as the primary key column data type or if the data format in the foreign key column does not match the data format in the primary key column, it can cause a foreign key constraint violation error during data insertion."
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_check_foreign_key_format($PRIMARY_KEY_COLUMN, $FOREIGN_KEY_COLUMN, $FOREIGN_KEY_TABLE_NAME, $DATABASE_NAME, $TABLE_NAME)"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the data being inserted into the tables. Ensure that the data matches the expected data type and format."
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_validate_table_data($DATA_TYPE, $DATABASE_NAME, $TABLE_NAME, $DATA_FORMAT)"
+    }
+  ]
+}
